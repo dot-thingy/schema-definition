@@ -1,55 +1,92 @@
 Thingy {
-  ThingySchema = (ApplicationDefinition | IncludeDefinition | StorageDefinition | ComponentDefinition | SourceDefinition | EndpointDefinition)+
+  // OVERALL SCHEMA
+  ThingyDefinitionExpr = Comment* ThingySchema Comment*
+  ThingySchema = ApplicationDefinition ThingySchemaDeclarationExpr*
+  ThingySchemaDeclarationExpr = ThingySchemaDeclarations | Comment
+  ThingySchemaDeclarations = IncludeDefinition | ConfigDefinition | ComponentDefinition | SourceDefinition | EndpointDefinition
 
-  // APPLICATION (only one)
-  ApplicationDefinition = "Application" AppName "{" Stuff "}"
-  AppName = alnum+
-  Stuff = (Comment | Any)*
-  
   // COMMON TYPES
-  QuoteChar = ("'" | "\"")
+  PascalCased = upper alnum*
+  ThingyThingDeclaration = PascalCased
+  QuoteChar = ((~"\\" "'") | (~"\\" "\""))
   Quoted<x> = QuoteChar x QuoteChar
   QuotedFilePath = Quoted<FilePath>
-  EndpointPath = ("/" alnum+)+
+  EndpointPath = "/" alnum* ("/" alnum*)*
   FilePath = alnum* ("/" alnum+)* ("." alnum+)*
   Comment = "//" (~"\n" any)* "\n"
+  AssignmentChar = "="
+  AssignmentExpr<assignee, evaluator> = assignee AssignmentChar evaluator
+  ComputedValue = ComputedValueExpr | Quoted<ComputedValueExpr>
+  ComputedValueExpr = (any ComputedKeywords* any*)+
+  ComputedKeywords = KeywordStringInterpolation
+  KeywordStringInterpolation = "${" KeywordStringInterpolationInput "}"
+  KeywordStringInterpolationInput = Any+
   Any = any
-  
+
+  ////////////////////////////
+  // GLOBAL TYPES AVAILABLE //
+  ////////////////////////////
+
+  // APPLICATION
+  ApplicationDefinition = "Application" ApplicationName "{" ApplicationExpr "}"
+  ApplicationName = ThingyThingDeclaration
+  ApplicationExpr = (ApplicationProperty | Comment)*
+  ApplicationProperty = ApplicationPropDisplayNameExpr
+  // display name
+  ApplicationPropDisplayNameExpr = AssignmentExpr<"DisplayName", Quoted<ApplicationPropDisplayName>>
+  ApplicationPropDisplayName = (~QuoteChar Any)*
+
+  // CONFIG OPTIONS
+  ConfigDefinition = "Config" ConfigName "{" ConfigExpr "}"
+  ConfigName = ThingyThingDeclaration
+  ConfigExpr = (ConfigPropertyExpr | Comment)*
+  // property defs
+  ConfigPropertyExpr = AssignmentExpr<ConfigPropertyName, ConfigValue>
+  ConfigPropertyName = ThingyThingDeclaration
+  ConfigValue = (StaticConfigValue | ComputedConfigValue)
+  StaticConfigValue = (StaticConfigValueDigit | Quoted<StaticConfigValueString>)
+  StaticConfigValueDigit = (~"\n" digit)+
+  StaticConfigValueString = (~QuoteChar Any)*
+  ComputedConfigValue = ComputedValue
+
   // INCLUDES
   IncludeDefinition = "Include" FilePath
 
   // STORAGES
-  StorageDefinition = "Storage" StorageName "{" ConnectionOptions "}"
-  StorageName = alnum+
-  ConnectionOptions = (ConnectionOption | Comment | Any)*
-  
-  ConnectionOption = alnum+ "=" alnum+ spaces?
+  // StorageDefinition = "Storage" StorageName "{" ConnectionOptions "}"
+  // StorageName = ThingyThingDeclaration
+  // ConnectionOptions = (ConnectionOption | Comment | Any)*
+  // ConnectionOptionPropertyName = ThingyThingDeclaration
+  // ConnectionOption = ConnectionOptionPropertyName AssignmentChar alnum+ spaces?
 
   // COMPONENTS
   ComponentDefinition = "Component" ComponentName "{" ComponentExpr "}"
-  ComponentName = alnum+
-  ComponentExpr = "source" spaces ComponentSource
+  ComponentName = ThingyThingDeclaration
+  ComponentExpr = AssignmentExpr<"source", ComponentSource>
   ComponentSource = QuotedFilePath
 
   // SOURCES
   SourceDefinition = "Source" SourceName "{" SourceExpr "}"
-  SourceName = upper alnum*
-  SourceExpr = "type" spaces SourceType spaces SourceSourceExpr
-  SourceType = "Function" | "Component"
-  SourceSourceExpr = "source" spaces SourceSource
+  SourceName = ThingyThingDeclaration
+  SourceExpr = SourceTypeExpr SourceSourceExpr
+  // type
+  SourceTypeExpr = AssignmentExpr<"type", SourceType>
+  SourceType = ("Function" | "Component")
+  // source
+  SourceSourceExpr = AssignmentExpr<"source", SourceSource>
   SourceSource = (ComponentName | QuotedFilePath)
-  
+
+  // ENDPOINTS
   EndpointDefinition = "Endpoint" EndpointName "{" EndpointExpr "}"
-  EndpointName = upper alnum*
-  EndpointExpr = EndpointMethodExpr EndpointPathExpr EndpointUseExpr //EndpointAfterExpr*
-  EndpointMethodExpr = "method" EndpointMethod
+  EndpointName = ThingyThingDeclaration
+  EndpointExpr = EndpointMethodExpr EndpointPathExpr EndpointUseExpr
+  // method
+  EndpointMethodExpr = AssignmentExpr<"method", EndpointMethod>
   EndpointMethod = "GET" | "POST" | "PUT" | "DELETE"
-  EndpointPathExpr = "path" EndpointPathDef
+  // path
+  EndpointPathExpr = AssignmentExpr<"path", EndpointPathDef>
   EndpointPathDef = Quoted<EndpointPath>
-  //EndpointBeforeExpr = "before" EndpointBeforeItems
-  //EndpointBeforeItems = "[" any+ "]"
-  EndpointUseExpr = "use" EndpointUseComponentExpr
+  // use
+  EndpointUseExpr = AssignmentExpr<"use", EndpointUseComponentExpr>
   EndpointUseComponentExpr = ComponentName
-  //EndpointAfterExpr = "after" EndpointAfterItems
-  //EndpointAfterItems = "[" any+ "]"
 }

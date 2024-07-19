@@ -1,0 +1,20 @@
+Application TestOne {
+	DisplayName = 'Hello world example'
+}
+
+Config HelloWorldConfig {
+	Hello = 'world'
+  Age = 84
+  Computed = '${SECRETS.value}'
+}
+
+Source HelloWorldApiHandler {
+	type = Function
+  source = '/api/functions/helloWorld.js'
+}
+
+Endpoint HelloWorld {
+	method = GET
+  path = '/hello'
+  use = HelloWorldApiHandler
+}

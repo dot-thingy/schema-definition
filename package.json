@@ -1,0 +1,25 @@
+{
+  "name": "schema-definition",
+  "version": "1.0.0",
+  "description": "The repository containing the thingy language schema definitions",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "node lib/testExamples.js ./thingy.ohm"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dot-thingy/schema-definition.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dot-thingy/schema-definition/issues"
+  },
+  "homepage": "https://github.com/dot-thingy/schema-definition#readme",
+  "dependencies": {
+    "ohm-js": "^17.1.0"
+  }
+}
