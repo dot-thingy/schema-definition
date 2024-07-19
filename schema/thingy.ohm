@@ -7,50 +7,67 @@ Thingy {
 
   // COMMON TYPES
   PascalCased = upper alnum*
+  QuotedThingyString = Quoted<ThingyString>
+  ThingyString = (~QuoteChar Any)*
   ThingyThingDeclaration = PascalCased
   QuoteChar = ((~"\\" "'") | (~"\\" "\""))
   Quoted<x> = QuoteChar x QuoteChar
   QuotedFilePath = Quoted<FilePath>
   EndpointPath = "/" alnum* ("/" alnum*)*
-  FilePath = alnum* ("/" alnum+)* ("." alnum+)*
+  FilePath = alnum* ("/" alnum+)* ("." alnum+)+
   Comment = "//" (~"\n" any)* "\n"
   AssignmentChar = "="
   AssignmentExpr<assignee, evaluator> = assignee AssignmentChar evaluator
-  ComputedValue = ComputedValueExpr | Quoted<ComputedValueExpr>
-  ComputedValueExpr = (any ComputedKeywords* any*)+
-  ComputedKeywords = KeywordStringInterpolation
-  KeywordStringInterpolation = "${" KeywordStringInterpolationInput "}"
-  KeywordStringInterpolationInput = Any+
+  // ComputedValue = Quoted<ComputedValueKeywordExpr>
+  // ComputedValueKeywordExpr = KeywordStringInterpolation
+  // KeywordStringInterpolation = "${" KeywordStringInterpolationExpr "}"
+  // KeywordStringInterpolationExpr = (~"}" KeywordStringInterpolationInput)+
+  // KeywordStringInterpolationInput = ReservedComputedInjections+ "." Any+
   Any = any
+
+  // THINGY GLOBAL OBJECT RESERVED KEYWORDS - WIP: not working yet!
+  AnyUnreservedComputedInjections = (~ReservedComputedInjections Any)+
+  ReservedComputedInjections = (SecretsKeyword | EnvKeyword)
+  SecretsKeyword = "@SECRETS"
+  EnvKeyword = "@ENV"
+  ApplicationDefKeyword = "Application"
+  ConfigDefKeyword = "Config"
+  IncludeDefKeyword = "Include"
+  ComponentDefKeyword = "Component"
+  SourceDefKeyword = "Source"
+  EndpointDefKeyword = "Endpoint"
 
   ////////////////////////////
   // GLOBAL TYPES AVAILABLE //
   ////////////////////////////
 
   // APPLICATION
-  ApplicationDefinition = "Application" ApplicationName "{" ApplicationExpr "}"
+  ApplicationDefinition = ApplicationDefKeyword ApplicationName "{" ApplicationExpr "}"
   ApplicationName = ThingyThingDeclaration
   ApplicationExpr = (ApplicationProperty | Comment)*
-  ApplicationProperty = ApplicationPropDisplayNameExpr
+  ApplicationProperty = ApplicationPropDisplayNameExpr | ApplicationPropSecretsExpr
   // display name
   ApplicationPropDisplayNameExpr = AssignmentExpr<"DisplayName", Quoted<ApplicationPropDisplayName>>
   ApplicationPropDisplayName = (~QuoteChar Any)*
+  // secrets
+  ApplicationPropSecretsExpr = AssignmentExpr<"Secrets", Quoted<ApplicationPropSecrets>>
+  ApplicationPropSecrets = FilePath
 
   // CONFIG OPTIONS
-  ConfigDefinition = "Config" ConfigName "{" ConfigExpr "}"
+  ConfigDefinition = ConfigDefKeyword ConfigName "{" ConfigExpr "}"
   ConfigName = ThingyThingDeclaration
-  ConfigExpr = (ConfigPropertyExpr | Comment)*
+  ConfigExpr = (ConfigPropertyExpr | Comment)+
   // property defs
   ConfigPropertyExpr = AssignmentExpr<ConfigPropertyName, ConfigValue>
   ConfigPropertyName = ThingyThingDeclaration
-  ConfigValue = (StaticConfigValue | ComputedConfigValue)
-  StaticConfigValue = (StaticConfigValueDigit | Quoted<StaticConfigValueString>)
+  ConfigValue = StaticConfigValueDigit | ConfigValueString
+  // ConfigValueString = Quoted<(~QuoteChar Any)*>
+  ConfigValueString = QuotedThingyString
   StaticConfigValueDigit = (~"\n" digit)+
-  StaticConfigValueString = (~QuoteChar Any)*
-  ComputedConfigValue = ComputedValue
+  // StaticConfigValueString = (~QuoteChar Any)*
 
   // INCLUDES
-  IncludeDefinition = "Include" FilePath
+  IncludeDefinition = IncludeDefKeyword QuotedFilePath
 
   // STORAGES
   // StorageDefinition = "Storage" StorageName "{" ConnectionOptions "}"
@@ -60,13 +77,13 @@ Thingy {
   // ConnectionOption = ConnectionOptionPropertyName AssignmentChar alnum+ spaces?
 
   // COMPONENTS
-  ComponentDefinition = "Component" ComponentName "{" ComponentExpr "}"
+  ComponentDefinition = ComponentDefKeyword ComponentName "{" ComponentExpr "}"
   ComponentName = ThingyThingDeclaration
   ComponentExpr = AssignmentExpr<"source", ComponentSource>
   ComponentSource = QuotedFilePath
 
   // SOURCES
-  SourceDefinition = "Source" SourceName "{" SourceExpr "}"
+  SourceDefinition = SourceDefKeyword SourceName "{" SourceExpr "}"
   SourceName = ThingyThingDeclaration
   SourceExpr = SourceTypeExpr SourceSourceExpr
   // type
@@ -77,7 +94,7 @@ Thingy {
   SourceSource = (ComponentName | QuotedFilePath)
 
   // ENDPOINTS
-  EndpointDefinition = "Endpoint" EndpointName "{" EndpointExpr "}"
+  EndpointDefinition = EndpointDefKeyword EndpointName "{" EndpointExpr "}"
   EndpointName = ThingyThingDeclaration
   EndpointExpr = EndpointMethodExpr EndpointPathExpr EndpointUseExpr
   // method

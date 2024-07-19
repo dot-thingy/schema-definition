@@ -1,20 +1,21 @@
 Application TestOne {
-	DisplayName = 'Hello world example'
+  DisplayName = 'Hello world example'
+  Secrets = '/config/secrets.thingy'
 }
 
 Config HelloWorldConfig {
-	Hello = 'world'
-  Age = 84
-  Computed = '${SECRETS.value}'
+  Hello = 'world'
+  HoursSlept = 5
+  Computed = '${@SECRETS.TopSecretValue}'
 }
 
 Source HelloWorldApiHandler {
-	type = Function
+  type = Function
   source = '/api/functions/helloWorld.js'
 }
 
 Endpoint HelloWorld {
-	method = GET
+  method = GET
   path = '/hello'
   use = HelloWorldApiHandler
 }

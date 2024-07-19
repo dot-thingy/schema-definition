@@ -7,7 +7,7 @@
     "example": "examples"
   },
   "scripts": {
-    "test": "node lib/testExamples.js ./thingy.ohm"
+    "test": "node lib/testExamples.js ./schema/thingy.ohm"
   },
   "repository": {
     "type": "git",
