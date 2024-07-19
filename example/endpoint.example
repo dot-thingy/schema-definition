@@ -1,6 +1,0 @@
-Endpoint HelloWorld {
-  method GET
-  path '/helloWorld'
-  use HelloWorld
-}
-
