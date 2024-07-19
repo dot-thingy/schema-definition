@@ -1,0 +1,55 @@
+Thingy {
+  ThingySchema = (ApplicationDefinition | IncludeDefinition | StorageDefinition | ComponentDefinition | SourceDefinition | EndpointDefinition)+
+
+  // APPLICATION (only one)
+  ApplicationDefinition = "Application" AppName "{" Stuff "}"
+  AppName = alnum+
+  Stuff = (Comment | Any)*
+  
+  // COMMON TYPES
+  QuoteChar = ("'" | "\"")
+  Quoted<x> = QuoteChar x QuoteChar
+  QuotedFilePath = Quoted<FilePath>
+  EndpointPath = ("/" alnum+)+
+  FilePath = alnum* ("/" alnum+)* ("." alnum+)*
+  Comment = "//" (~"\n" any)* "\n"
+  Any = any
+  
+  // INCLUDES
+  IncludeDefinition = "Include" FilePath
+
+  // STORAGES
+  StorageDefinition = "Storage" StorageName "{" ConnectionOptions "}"
+  StorageName = alnum+
+  ConnectionOptions = (ConnectionOption | Comment | Any)*
+  
+  ConnectionOption = alnum+ "=" alnum+ spaces?
+
+  // COMPONENTS
+  ComponentDefinition = "Component" ComponentName "{" ComponentExpr "}"
+  ComponentName = alnum+
+  ComponentExpr = "source" spaces ComponentSource
+  ComponentSource = QuotedFilePath
+
+  // SOURCES
+  SourceDefinition = "Source" SourceName "{" SourceExpr "}"
+  SourceName = upper alnum*
+  SourceExpr = "type" spaces SourceType spaces SourceSourceExpr
+  SourceType = "Function" | "Component"
+  SourceSourceExpr = "source" spaces SourceSource
+  SourceSource = (ComponentName | QuotedFilePath)
+  
+  EndpointDefinition = "Endpoint" EndpointName "{" EndpointExpr "}"
+  EndpointName = upper alnum*
+  EndpointExpr = EndpointMethodExpr EndpointPathExpr EndpointUseExpr //EndpointAfterExpr*
+  EndpointMethodExpr = "method" EndpointMethod
+  EndpointMethod = "GET" | "POST" | "PUT" | "DELETE"
+  EndpointPathExpr = "path" EndpointPathDef
+  EndpointPathDef = Quoted<EndpointPath>
+  //EndpointBeforeExpr = "before" EndpointBeforeItems
+  //EndpointBeforeItems = "[" any+ "]"
+  EndpointUseExpr = "use" EndpointUseComponentExpr
+  EndpointUseComponentExpr = ComponentName
+  //EndpointAfterExpr = "after" EndpointAfterItems
+  //EndpointAfterItems = "[" any+ "]"
+}
